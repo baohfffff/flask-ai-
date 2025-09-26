@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理 - 学生考勤系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-camera-reels"></i> 学生考勤系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('dashboard') }}">仪表盘</a>
+                <a class="nav-link" href="{{ url_for('attendance_page') }}">人脸打卡</a>
+                <a class="nav-link active" href="{{ url_for('students_page') }}">学生管理</a>
+                <a class="nav-link" href="{{ url_for('logout') }}">退出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-people"></i> 学生管理</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="bi bi-person-plus"></i> 添加学生
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                {% if students %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>人脸状态</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.student_id }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>
+                                    {% if student.face_id %}
+                                    <span class="badge bg-success">已注册</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">未注册</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">查看</button>
+                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">暂无学生数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加学生模态框 -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm">
+                        <div class="mb-3">
+                            <label for="studentId" class="form-label">学号</label>
+                            <input type="text" class="form-control" id="studentId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentName" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="studentName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentImage" class="form-label">人脸照片</label>
+                            <input type="file" class="form-control" id="studentImage" accept="image/*" required>
+                            <div class="form-text">请上传清晰的正脸照片</div>
+                        </div>
+                        <div class="mb-3">
+                            <video id="cameraPreview" autoplay playsinline style="width: 100%; border: 1px solid #ddd; display: none;"></video>
+                            <button type="button" id="startCamera" class="btn btn-outline-secondary btn-sm">使用摄像头</button>
+                            <canvas id="captureCanvas" style="display: none;"></canvas>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitStudent">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 摄像头功能
+        const cameraPreview = document.getElementById('cameraPreview');
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureCanvas = document.getElementById('captureCanvas');
+
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                cameraPreview.srcObject = stream;
+                cameraPreview.style.display = 'block';
+                startCameraBtn.style.display = 'none';
+            } catch (err) {
+                alert('无法访问摄像头: ' + err.message);
+            }
+        });
+
+        // 添加学生表单提交
+        document.getElementById('submitStudent').addEventListener('click', function() {
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+            const imageFile = document.getElementById('studentImage').files[0];
+
+            if (!studentId || !studentName) {
+                alert('请填写完整信息');
+                return;
+            }
+
+            let imageData = '';
+            if (imageFile) {
+                // 处理文件上传
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imageData = e.target.result;
+                    submitStudentData(studentId, studentName, imageData);
+                };
+                reader.readAsDataURL(imageFile);
+            } else if (cameraPreview.style.display === 'block') {
+                // 使用摄像头拍照
+                const context = captureCanvas.getContext('2d');
+                captureCanvas.width = cameraPreview.videoWidth;
+                captureCanvas.height = cameraPreview.videoHeight;
+                context.drawImage(cameraPreview, 0, 0);
+                imageData = captureCanvas.toDataURL('image/jpeg');
+                submitStudentData(studentId, studentName, imageData);
+            } else {
+                alert('请选择照片或使用摄像头拍照');
+                return;
+            }
+        });
+
+        function submitStudentData(studentId, studentName, imageData) {
+            fetch('/api/students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    name: studentName,
+                    image: imageData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('学生添加成功');
+                    location.reload();
+                } else {
+                    alert('添加失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表盘 - 学生考勤系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-camera-reels"></i> 学生考勤系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> 梦海科技
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('attendance_page') }}">
+                            <i class="bi bi-camera"></i> 人脸识别打卡
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('students_page') }}">
+                            <i class="bi bi-people"></i> 学生管理
+                        </a>
+                    </li>
+                    {% if session.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('settings_page') }}">
+                            <i class="bi bi-gear"></i> 系统管理
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ session.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('profile_page') }}"><i class="bi bi-person"></i> 个人信息</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 仪表盘内容 -->
+    <div class="dashboard-header">
+        <div class="container">
+            <h1><i class="bi bi-speedometer2"></i>梦海科技 <img src="static/images/logo.png" alt="梦海科技 logo" style="width: 100px; height: 50px;"></h1>
+
+{#            <h1><i class="bi bi-speedometer2"></i> 梦海科技</h1>#}
+            <p class="lead">欢迎回来，{{ session.username }}！今天是 <span class="current-datetime">{{ current_date }}</span></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card stat-card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_students }}</h4>
+                                <p>总学生数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-people-fill" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ today_attendance }}</h4>
+                                <p>今日打卡人数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_students - today_attendance if total_students >= today_attendance else 0 }}</h4>
+                                <p>今日缺勤人数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-exclamation-circle-fill" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-lightning"></i> 快速操作</h5>
+                    </div>
+                    <div class="card-body quick-actions">
+                        <a href="{{ url_for('attendance_page') }}" class="btn btn-primary">
+                            <i class="bi bi-camera"></i> 人脸识别打卡
+                        </a>
+                        <a href="{{ url_for('students_page') }}" class="btn btn-success">
+                            <i class="bi bi-person-plus"></i> 添加学生
+                        </a>
+                        <button class="btn btn-info" id="refresh-btn">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近考勤记录 -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="bi bi-clock-history"></i> 最近考勤记录</h5>
+                        <small>最近5条记录</small>
+                    </div>
+                    <div class="card-body">
+                        <div id="recent-attendance">
+                            {% if recent_attendance %}
+                                <div class="list-group">
+                                    {% for record in recent_attendance %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ record.student.name }}</h6>
+                                            <small class="text-muted">学号: {{ record.student.student_id }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success rounded-pill">{{ record.status }}</span>
+                                            {% if record.confidence %}
+                                            <br>
+                                            <small class="text-muted">置信度: {{ "%.1f"|format(record.confidence) }}</small>
+                                            {% endif %}
+                                            <br>
+                                            <small>{{ record.timestamp.strftime('%H:%M') }}</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center">暂无考勤记录</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统状态 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> 系统状态</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span class="fw-bold">百度AI服务:</span>
+                            <span class="badge bg-success" id="baidu-status">在线</span>
+                        </div>
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span class="fw-bold">数据库连接:</span>
+                            <span class="badge bg-success">正常</span>
+                        </div>
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span class="fw-bold">学生总数:</span>
+                            <span>{{ total_students }} 人</span>
+                        </div>
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span class="fw-bold">今日打卡率:</span>
+                            <span>
+                                {% if total_students > 0 %}
+                                    {{ "%.1f"|format((today_attendance / total_students) * 100) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 今日考勤统计 -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-graph-up"></i> 今日考勤统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ (today_attendance / total_students * 100) if total_students > 0 else 0 }}%"
+                                 aria-valuenow="{{ today_attendance }}" aria-valuemin="0" aria-valuemax="{{ total_students }}">
+                                已打卡: {{ today_attendance }}
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 style="width: {{ ((total_students - today_attendance) / total_students * 100) if total_students > 0 else 0 }}%"
+                                 aria-valuenow="{{ total_students - today_attendance }}" aria-valuemin="0" aria-valuemax="{{ total_students }}">
+                                未打卡: {{ total_students - today_attendance if total_students >= today_attendance else 0 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-light mt-5 py-3">
+        <div class="container text-center">
+            <span class="text-muted"><a href="https://www.025862.xyz/" target="_blank">梦海博客</a> 学生考勤系统 - 基于Flask和百度AI人脸识别</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        // 更新当前日期时间
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            const currentDateElement = document.querySelector('.current-datetime');
+            if (currentDateElement) {
+                currentDateElement.textContent = now.toLocaleDateString('zh-CN', options);
+            }
+        }
+
+        // 初始更新
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+        // 刷新按钮功能
+        document.getElementById('refresh-btn')?.addEventListener('click', function() {
+            location.reload();
+        });
+    </script>
+</body>
+</html>

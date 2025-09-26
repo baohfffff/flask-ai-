@@ -1,0 +1,11 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Werkzeug==2.3.7
+aliyun-python-sdk-core==2.13.36
+aliyun-python-sdk-facebody==1.0.7
+
+
+
+
+baidu-aip==2.2.18.0
+Flask-Migrate==4.0.5

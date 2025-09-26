@@ -1,0 +1,65 @@
+/* 仪表盘头部样式 */
+.dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.dashboard-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header .lead {
+    opacity: 0.9;
+    font-size: 1.2rem;
+}
+
+/* 快速操作区域 */
+.quick-actions .btn {
+    margin: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* 考勤记录列表 */
+.attendance-list .list-group-item {
+    border: none;
+    border-bottom: 1px solid #eaeaea;
+    padding: 1rem 1.5rem;
+}
+
+.attendance-list .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* 状态标签 */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-present {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-late {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-absent {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* 系统状态卡片 */
+.system-status .badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+}
